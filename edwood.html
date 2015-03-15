@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Edwood</title>
+
+<script src="https://cdn.rawgit.com/reactjs/react-bower/v0.13.0/react.min.js"></script>
+<script src="https://cdn.rawgit.com/croizier/edwood/v0.1.0/edwood.js"></script>
+<script>
+function gebi(id) { return document.getElementById(id); }
+function render(editor) { React.render(editor, gebi('container')); }
+function show(doc) { gebi('text').value = doc.serialize(); }
+function update() { 
+  React.unmountComponentAtNode(gebi('container'));
+  var doc = edwood.parser.parse(gebi('xml').value, gebi('rng').value);
+  var editor = edwood.universal({element: doc.documentElement});
+  function refresh() { render(editor); show(doc); }
+  doc.onChange(refresh);
+  refresh();
+}
+</script>
+
+<body style="width:800px; margin: auto" onload="update()">
+
+<h1>Edwood</h1>
+Edwood is library for building in-browser schema-aware XML editors. Here is an
+example of an <i>universal</i> editor (able to edit XML according any
+pre-defined schema).
+
+<h2>Edit some XML</h2>
+<p>The form on the left edits the XML document displayed on the right.
+Each input field of the form matches an attribute or element of the document.</p>
+<p>The XML document must contain a sequence of elements <i>number</i> with an
+attribute <i>negative</i> whose boolean value tells whether the element
+contains a negative or positive integer. Edit an attribute or element in the
+form, and see what happens!</p>
+<div id="container" style="width:435px; display:inline-block; vertical-align: top"></div>
+<textarea readonly id="text" style="width:350px; height:100px; margin-top:5px"></textarea>
+
+<h2>Try another schema</h2>
+<p>To use another schema, change the simplified Relax NG grammar that sits in
+the box on the left, and likewise with the box on the right for the XML
+document itself. Then press the <i>Update</i> button to refresh the
+editor.</p>
+
+<button onclick="update()" style="width:795px">Update</button>
+<textarea id="rng" spellcheck="false" style="width:430px; height:440px">
+<grammar>
+  <start><ref name="numbers"/></start>
+  <define name="numbers"><element>
+    <name>numbers</name>
+    <oneOrMore><ref name="number"/></oneOrMore>
+  </element></define>
+  <define name="number"><element>
+    <name>number</name>
+    <choice>
+      <group>
+        <attribute>
+          <name>negative</name>
+          <value type="boolean">false</value>
+        </attribute>
+        <data type="nonNegativeInteger"/>
+      </group>
+      <group>
+        <attribute>
+          <name>negative</name>
+          <value type="boolean">true</value>
+        </attribute>
+        <data type="integer">
+          <param name="maxInclusive">0</param>
+        </data>
+      </group>
+    </choice>
+  </element></define>
+</grammar>
+</textarea>
+<textarea id="xml" spellcheck="false" style="width:350px; height:440px">
+<numbers>
+  <number negative="false">42</number>
+  <number negative="true"> -3</number>
+</numbers>
+</textarea>
